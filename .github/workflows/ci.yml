@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -32,11 +32,16 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      - name: Run Playwright E2E tests
+      - name: Run FastAPI server in background
+        env:
+          # if your app uses DATABASE_URL, this makes it use a local sqlite file in CI
+          DATABASE_URL: "sqlite:///./test-ci.db"
         run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 5
-          npx playwright test
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test
 
       - name: Log in to Docker Hub
         if: success()
