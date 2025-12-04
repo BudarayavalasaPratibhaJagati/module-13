@@ -11,3 +11,5 @@ python-dotenv
 passlib[bcrypt]
 email-validator
 python-jose[cryptography]
+bcrypt<4
+bcrypt<4
