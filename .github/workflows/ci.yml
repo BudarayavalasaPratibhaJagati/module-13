@@ -32,16 +32,30 @@ jobs:
           npm ci
           npx playwright install --with-deps
 
-      - name: Run FastAPI server in background
+      - name: Run server and Playwright E2E tests
         env:
-          # if your app uses DATABASE_URL, this makes it use a local sqlite file in CI
+          # if your app needs a DB URL, this gives it a simple sqlite file in CI
           DATABASE_URL: "sqlite:///./test-ci.db"
         run: |
-          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 10
+          # start FastAPI server in background
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          SERVER_PID=$!
 
-      - name: Run Playwright E2E tests
-        run: npx playwright test
+          # wait for server to be ready
+          for i in {1..15}; do
+            if curl -sSf http://127.0.0.1:8000/docs > /dev/null; then
+              echo "Server is up!"
+              break
+            fi
+            echo "Waiting for server..."
+            sleep 2
+          done
+
+          # run Playwright tests
+          npx playwright test
+
+          # stop server
+          kill $SERVER_PID
 
       - name: Log in to Docker Hub
         if: success()
