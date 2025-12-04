@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+
+  <form id="login-form">
+    <label>Email: <input type="email" id="email" required></label><br>
+    <label>Password: <input type="password" id="password" required></label><br>
+    <button type="submit">Login</button>
+  </form>
+
+  <p id="message"></p>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      if (!email.includes('@')) {
+        msg.textContent = "Please enter a valid email.";
+        return;
+      }
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok) {
+          const text = await res.text();  // token JSON or text
+          localStorage.setItem('token_raw', text);
+          msg.textContent = "Login successful!";
+        } else if (res.status === 401) {
+          msg.textContent = "Invalid credentials.";
+        } else {
+          let text = await res.text();
+          msg.textContent = `Login failed (${res.status}): ${text}`;
+        }
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Error connecting to server.";
+      }
+    });
+  </script>
+</body>
+</html>

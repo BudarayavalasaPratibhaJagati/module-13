@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+</head>
+<body>
+  <h1>Register</h1>
+
+  <form id="register-form">
+    <label>Email: <input type="email" id="email" required></label><br>
+    <label>Password: <input type="password" id="password" required></label><br>
+    <label>Confirm Password: <input type="password" id="confirm" required></label><br>
+    <button type="submit">Register</button>
+  </form>
+
+  <p id="message"></p>
+
+  <script>
+    const form = document.getElementById('register-form');
+    const msg = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm').value;
+
+      if (!email.includes('@')) {
+        msg.textContent = "Please enter a valid email.";
+        return;
+      }
+
+      if (password.length < 8) {
+        msg.textContent = "Password must be at least 8 characters.";
+        return;
+      }
+
+      if (password !== confirm) {
+        msg.textContent = "Passwords do not match.";
+        return;
+      }
+
+      try {
+        // use relative URL so it always talks to the same server
+        const res = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (res.ok || res.status === 201) {
+          msg.textContent = "Registration successful!";
+        } else {
+          // try to read whatever the server sent back
+          let text = await res.text();
+          msg.textContent = `Registration failed (${res.status}): ${text}`;
+        }
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "Error connecting to server.";
+      }
+    });
+  </script>
+</body>
+</html>
